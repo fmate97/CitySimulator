@@ -1,31 +1,40 @@
 using UnityEngine;
 using UnityEngine.AI;
-using System.Collections.Generic;
 
 public class CharacterMovement : MonoBehaviour
 {
-    private bool _selectedByPlayer = false, _recentSelected = false, _running = false;
+    private bool _selectedByPlayer = false, _running = false, _recentSelected = false;
     private static readonly int _GROUND_LAYER = 1 << 6;
-    private string _charactersTag = "Characters", _runningBool = "Running";
+    private float _actualWalkingSpeed;
+    private string _runningBool = "Running";
     private Animator _animator;
     private Camera _mainCamera;
     private NavMeshAgent _agent;
     private Ray _ray;
     private RaycastHit _hit;
-    private List<GameObject> _otherCharacters;
+    private CharacterProperties _properties;
 
     void Start()
     {
-        _otherCharacters = new List<GameObject>(GameObject.FindGameObjectsWithTag(_charactersTag));
-        _otherCharacters.Remove(gameObject);
-
         _animator = GetComponent<Animator>();
         _agent = GetComponent<NavMeshAgent>();
         _mainCamera = Camera.main;
+        _properties = GetComponent<CharacterProperties>();
+
+        _actualWalkingSpeed = _properties.walkingSpeed;
+        _agent.speed = _actualWalkingSpeed;
+        _animator.SetFloat("WalkingAnimationSpeed", _actualWalkingSpeed / 10f);
     }
 
-    void Update()
+    void LateUpdate()
     {
+        if (_actualWalkingSpeed != _properties.walkingSpeed)
+        {
+            _actualWalkingSpeed = _properties.walkingSpeed;
+            _agent.speed = _actualWalkingSpeed;
+            _animator.SetFloat("WalkingAnimationSpeed", _actualWalkingSpeed / 10f);
+        }
+
         if (Input.GetMouseButtonDown(0) && _selectedByPlayer && !_recentSelected)
         {
             _ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
@@ -42,35 +51,26 @@ public class CharacterMovement : MonoBehaviour
             {
                 _running = true;
                 _animator.SetBool(_runningBool, true);
+                _properties.NowDo = CharacterProperties.DoList.Walking;
             }
         }
         else if (_running)
         {
             _running = false;
             _animator.SetBool(_runningBool, false);
+            _properties.NowDo = CharacterProperties.DoList.Idle;
         }
-    }
 
-    void LateUpdate()
-    {
         if (_recentSelected) { _recentSelected = false; }
     }
 
-    void OnMouseOver()
+    public void SelectedCharacter()
     {
-        if (Input.GetMouseButtonDown(0) && !_selectedByPlayer)
-        {
-            _selectedByPlayer = true;
-            _recentSelected = true;
-
-            foreach (GameObject character in _otherCharacters)
-            {
-                character.GetComponent<CharacterMovement>().SelectedAnotherCharacter();
-            }
-        }
+        _selectedByPlayer = true;
+        _recentSelected = true;
     }
 
-    public void SelectedAnotherCharacter()
+    public void UnselectedCharacter()
     {
         _selectedByPlayer = false;
     }
