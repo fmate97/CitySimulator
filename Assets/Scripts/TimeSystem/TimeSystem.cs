@@ -27,7 +27,7 @@ public class TimeSystem : MonoBehaviour
     {
         _deltaTime += Time.deltaTime;
 
-        if (_deltaTime >= 1f)
+        if (_deltaTime >= .5f)
         {
             _deltaTime = 0f;
             AddMinute(basicGameSpeed * _gameSpeed);
@@ -79,12 +79,12 @@ public class TimeSystem : MonoBehaviour
     {
         _actualMinute += minute;
 
-        if (_actualMinute >= 60)
+        while (_actualMinute >= 60)
         {
             _actualMinute -= 60;
             _actualHour++;
 
-            if (_actualHour >= 24)
+            while (_actualHour >= 24)
             {
                 _actualHour -= 24;
                 AddOneDay();

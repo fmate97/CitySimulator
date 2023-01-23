@@ -1,6 +1,8 @@
 using System.Linq;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.EventSystems;
+using System.Collections.Generic;
 
 public class CharacterMovement : MonoBehaviour
 {
@@ -12,10 +14,10 @@ public class CharacterMovement : MonoBehaviour
     private float _actualWalkingSpeed, _actualGatheringSpeed;
     private string _idleTrigger = "Idle", _runningTrigger = "Running", _gatheringTrigger = "Gathering";
     private Animator _animator;
-    private Camera _mainCamera;
+    private Camera _mainCamera, _uiCamera;
     private NavMeshAgent _agent;
-    private Ray _ray;
-    private RaycastHit _hit;
+    private Ray _ray, _uiRay;
+    private RaycastHit _hit, _uiHit;
     private CharacterProperties _properties;
     private GameObject _selectedGameObject;
     private TimeSystem _timeSystemScript;
@@ -26,6 +28,7 @@ public class CharacterMovement : MonoBehaviour
         _animator = GetComponent<Animator>();
         _agent = GetComponent<NavMeshAgent>();
         _mainCamera = Camera.main;
+        _uiCamera = Camera.allCameras.Where(x => x.name == "UICamera").First();
         _properties = GetComponent<CharacterProperties>();
 
         SetWalkingSpeed();
@@ -38,6 +41,8 @@ public class CharacterMovement : MonoBehaviour
         if (CheckGatheringSpeed()) { SetGatheringSpeed(); }
 
         SetCharacterTarget();
+
+        if (_timeSystemScript.GetGameSpeed() == 0) { _agent.velocity = Vector3.zero; }
 
         SetCharacterAnimation();
 
@@ -93,8 +98,9 @@ public class CharacterMovement : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0) && _selectedByPlayer && !_recentSelected)
         {
-            _ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
+            if (PointerIsOverUI(Input.mousePosition)) { return; }
 
+            _ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
             if (Physics.Raycast(_ray, out _hit, 1000f, _BUSH_LAYER))
             {
                 Transform bushTransform = _hit.transform.GetComponentsInChildren<Transform>().Where(x => x.name == "CollectionPoint").First();
@@ -114,6 +120,23 @@ public class CharacterMovement : MonoBehaviour
                 _target = targetType.Ground;
             }
         }
+    }
+
+    bool PointerIsOverUI(Vector2 screenPos)
+    {
+        var hitObject = UIRaycast(ScreenPosToPointerData(screenPos));
+        return hitObject != null && hitObject.layer == LayerMask.NameToLayer("UI");
+    }
+
+    PointerEventData ScreenPosToPointerData(Vector2 screenPos)
+       => new(EventSystem.current) { position = screenPos };
+
+    GameObject UIRaycast(PointerEventData pointerData)
+    {
+        var results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(pointerData, results);
+
+        return results.Count < 1 ? null : results[0].gameObject;
     }
 
     void SetCharacterAnimation()
