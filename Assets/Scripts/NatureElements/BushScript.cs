@@ -11,15 +11,20 @@ public class BushScript : MonoBehaviour
     private float _deltaTime = 0f;
     private UIBarScript _infoPanelBarScript;
     private InventoryItemClass _itemProperty;
+    private TimeSystem _timeSystemScript;
 
     void Start()
     {
-        _infoPanelBarScript = infoPanel.GetComponentsInChildren<Transform>().Where(x => x.name == "FoodLevelBar").First().GetComponent<UIBarScript>();
+        _timeSystemScript = FindObjectOfType<TimeSystem>();
+
+        _infoPanelBarScript = infoPanel.GetComponentsInChildren<Transform>().Where(x => x.name == "FoodLevelPanel").First().GetComponent<UIBarScript>();
         _itemProperty = inventoryStackSize.inventoryItems.Where(x => x.name == itemName).First();
     }
 
     void Update()
     {
+        _deltaTime += Time.deltaTime * _timeSystemScript.GetGameSpeed();
+
         if (_actualItemNumber != _itemProperty.maxStackSize)
         {
             if (_deltaTime >= _itemProperty.timeToProduceAUnit)
@@ -28,8 +33,6 @@ public class BushScript : MonoBehaviour
                 _actualItemNumber++;
             }
         }
-
-        _deltaTime += Time.deltaTime;
     }
 
     void OnMouseEnter()

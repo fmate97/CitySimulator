@@ -18,9 +18,11 @@ public class CharacterMovement : MonoBehaviour
     private RaycastHit _hit;
     private CharacterProperties _properties;
     private GameObject _selectedGameObject;
+    private TimeSystem _timeSystemScript;
 
     void Start()
     {
+        _timeSystemScript = FindObjectOfType<TimeSystem>();
         _animator = GetComponent<Animator>();
         _agent = GetComponent<NavMeshAgent>();
         _mainCamera = Camera.main;
@@ -44,7 +46,7 @@ public class CharacterMovement : MonoBehaviour
 
     bool CheckWalkingSpeed()
     {
-        if (_actualWalkingSpeed != _properties.walkingSpeed)
+        if (_actualWalkingSpeed != _properties.walkingSpeed * _timeSystemScript.GetGameSpeed())
         {
             return true;
         }
@@ -53,13 +55,13 @@ public class CharacterMovement : MonoBehaviour
 
     void SetWalkingSpeed()
     {
-        _actualWalkingSpeed = _properties.walkingSpeed;
+        _actualWalkingSpeed = _properties.walkingSpeed * _timeSystemScript.GetGameSpeed();
         _agent.speed = _actualWalkingSpeed;
         _animator.SetFloat("WalkingAnimationSpeed", _actualWalkingSpeed / 10f);
     }
     bool CheckGatheringSpeed()
     {
-        if (_actualGatheringSpeed != _properties.gatheringSpeed)
+        if (_actualGatheringSpeed != _properties.gatheringSpeed * _timeSystemScript.GetGameSpeed())
         {
             return true;
         }
@@ -68,7 +70,7 @@ public class CharacterMovement : MonoBehaviour
 
     void SetGatheringSpeed()
     {
-        _actualGatheringSpeed = _properties.gatheringSpeed;
+        _actualGatheringSpeed = _properties.gatheringSpeed * _timeSystemScript.GetGameSpeed();
         _animator.SetFloat("GatheringAnimationSpeed", _actualGatheringSpeed / 10f);
     }
 
@@ -100,7 +102,7 @@ public class CharacterMovement : MonoBehaviour
                 _target = targetType.Bush;
                 _selectedGameObject = _hit.transform.gameObject;
 
-                if(Vector3.Distance(transform.position, bushTransform.position) <= 1f)
+                if (Vector3.Distance(transform.position, bushTransform.position) <= 1f)
                 {
                     _properties.NowDo = CharacterProperties.DoList.Gathering;
                     _animator.SetTrigger(_gatheringTrigger);

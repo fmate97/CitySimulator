@@ -12,10 +12,16 @@ public class CharacterProperties : MonoBehaviour
     [Range(0f, 10f)] public float gatheringSpeed;
 
     private float deltaTime = 0f;
+    private TimeSystem _timeSystemScript;
+
+    void Start()
+    {
+        _timeSystemScript = FindObjectOfType<TimeSystem>();
+    }
 
     void Update()
     {
-        deltaTime += Time.deltaTime;
+        deltaTime += Time.deltaTime * _timeSystemScript.GetGameSpeed();
 
         if (deltaTime >= 2.5f)
         {
